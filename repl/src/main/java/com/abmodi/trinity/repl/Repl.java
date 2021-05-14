@@ -1,5 +1,7 @@
 package com.abmodi.trinity.repl;
 
+import com.abmodi.trinity.parser.TrinitySqlParser;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,6 +12,7 @@ public class Repl {
     }
 
     private static void loop() throws IOException {
+        TrinitySqlParser parser = new TrinitySqlParser();
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(System.in));
         while(true) {
@@ -18,6 +21,7 @@ public class Repl {
             if (command.equalsIgnoreCase("exit")) {
                 System.exit(0);
             }
+            parser.parsePlan(command);
             System.out.println(command);
         }
     }

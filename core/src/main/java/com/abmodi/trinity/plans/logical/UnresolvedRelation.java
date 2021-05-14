@@ -1,4 +1,6 @@
-package com.abmodi.trinity;
+package com.abmodi.trinity.plans.logical;
+
+import com.abmodi.trinity.plans.logical.LeafNode;
 
 public class UnresolvedRelation extends LeafNode {
     String tableName;

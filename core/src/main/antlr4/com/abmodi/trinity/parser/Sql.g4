@@ -1,11 +1,6 @@
 grammar Sql;
 
 @members {
-  /**
-   * When false, INTERSECT is given the greater precedence over the other set
-   * operations (UNION, EXCEPT and MINUS) as per the SQL standard.
-   */
-  public boolean legacy_setops_precedence_enbled = false;
 
   /**
    * Verify whether current token is a valid decimal token (which contains dot).
@@ -42,10 +37,6 @@ singleTableIdentifier
     : tableIdentifier EOF
     ;
 
-singleDataType
-    : dataType EOF
-    ;
-
 
 statement
     : query                                                            #statementDefault
@@ -55,51 +46,12 @@ query
     : queryNoWith
     ;
 
-
-tableProvider
-    : USING qualifiedName
-    ;
-
-tablePropertyList
-    : '(' tableProperty (',' tableProperty)* ')'
-    ;
-
-tableProperty
-    : key=tablePropertyKey (EQ? value=tablePropertyValue)?
-    ;
-
-tablePropertyKey
-    : identifier ('.' identifier)*
-    | STRING
-    ;
-
-tablePropertyValue
-    : INTEGER_VALUE
-    | DECIMAL_VALUE
-    | booleanValue
-    | STRING
-    ;
-
 constantList
     : '(' constant (',' constant)* ')'
     ;
 
 nestedConstantList
     : '(' constantList (',' constantList)* ')'
-    ;
-
-createFileFormat
-    : STORED AS fileFormat
-    | STORED BY storageHandler
-    ;
-
-fileFormat
-    : INPUTFORMAT inFmt=STRING OUTPUTFORMAT outFmt=STRING    #tableFileFormat
-    | identifier                                             #genericFileFormat
-    ;
-
-storageHandler
-    : STRING (WITH SERDEPROPERTIES tablePropertyList)?
     ;
 
 resource
@@ -122,7 +74,6 @@ queryTerm
 
 queryPrimary
     : querySpecification                                                    #queryPrimaryDefault
-    | TABLE tableIdentifier                                                 #table
     ;
 
 sortItem
@@ -130,18 +81,7 @@ sortItem
     ;
 
 querySpecification
-    : (((SELECT kind=TRANSFORM '(' namedExpressionSeq ')'
-        | kind=MAP namedExpressionSeq
-        | kind=REDUCE namedExpressionSeq))
-       USING script=STRING
-       (AS (identifierSeq | colTypeList | ('(' (identifierSeq | colTypeList) ')')))?
-       outRowFormat=rowFormat?
-       (RECORDREADER recordReader=STRING)?
-       fromClause?
-       (WHERE where=booleanExpression)?)
-    | ((kind=SELECT setQuantifier? namedExpressionSeq fromClause?
-       | fromClause (kind=SELECT setQuantifier? namedExpressionSeq)?)
-       lateralView*
+    : (SELECT setQuantifier? namedExpressionSeq fromClause?
        (WHERE where=booleanExpression)?
        aggregation?
        (HAVING having=booleanExpression)?
@@ -149,7 +89,7 @@ querySpecification
     ;
 
 fromClause
-    : FROM relation (',' relation)* lateralView* pivotClause?
+    : FROM relation (',' relation)*
     ;
 
 aggregation
@@ -163,23 +103,6 @@ aggregation
 groupingSet
     : '(' (expression (',' expression)*)? ')'
     | expression
-    ;
-
-pivotClause
-    : PIVOT '(' aggregates=namedExpressionSeq FOR pivotColumn IN '(' pivotValues+=pivotValue (',' pivotValues+=pivotValue)* ')' ')'
-    ;
-
-pivotColumn
-    : identifiers+=identifier
-    | '(' identifiers+=identifier (',' identifiers+=identifier)* ')'
-    ;
-
-pivotValue
-    : expression (AS? identifier)?
-    ;
-
-lateralView
-    : LATERAL VIEW (OUTER)? qualifiedName '(' (expression (',' expression)*)? ')' tblName=identifier (AS? colName+=identifier (',' colName+=identifier)*)?
     ;
 
 setQuantifier
@@ -211,18 +134,6 @@ joinCriteria
     | USING '(' identifier (',' identifier)* ')'
     ;
 
-sample
-    : TABLESAMPLE '(' sampleMethod? ')'
-    ;
-
-sampleMethod
-    : negativeSign=MINUS? percentage=(INTEGER_VALUE | DECIMAL_VALUE) PERCENTLIT   #sampleByPercentile
-    | expression ROWS                                                             #sampleByRows
-    | sampleType=BUCKET numerator=INTEGER_VALUE OUT OF denominator=INTEGER_VALUE
-        (ON (identifier | qualifiedName '(' ')'))?                                #sampleByBucket
-    | bytes=expression                                                            #sampleByBytes
-    ;
-
 identifierList
     : '(' identifierSeq ')'
     ;
@@ -249,16 +160,6 @@ identifierComment
 
 relationPrimary
     : tableIdentifier      #tableName
-    ;
-
-rowFormat
-    : ROW FORMAT SERDE name=STRING (WITH SERDEPROPERTIES props=tablePropertyList)?  #rowFormatSerde
-    | ROW FORMAT DELIMITED
-      (FIELDS TERMINATED BY fieldsTerminatedBy=STRING (ESCAPED BY escapedBy=STRING)?)?
-      (COLLECTION ITEMS TERMINATED BY collectionItemsTerminatedBy=STRING)?
-      (MAP KEYS TERMINATED BY keysTerminatedBy=STRING)?
-      (LINES TERMINATED BY linesSeparatedBy=STRING)?
-      (NULL DEFINED AS nullDefinedAs=STRING)?                                       #rowFormatDelimited
     ;
 
 tableIdentifier
@@ -308,7 +209,6 @@ valueExpression
 primaryExpression
     : CASE whenClause+ (ELSE elseExpression=expression)? END                                   #searchedCase
     | CASE value=expression whenClause+ (ELSE elseExpression=expression)? END                  #simpleCase
-    | CAST '(' expression AS dataType ')'                                                      #cast
     | STRUCT '(' (argument+=namedExpression (',' argument+=namedExpression)*)? ')'             #struct
     | FIRST '(' expression (IGNORE NULLS)? ')'                                                 #first
     | LAST '(' expression (IGNORE NULLS)? ')'                                                  #last
@@ -367,33 +267,6 @@ intervalField
 intervalValue
     : (PLUS | MINUS)? (INTEGER_VALUE | DECIMAL_VALUE)
     | STRING
-    ;
-
-colPosition
-    : FIRST | AFTER identifier
-    ;
-
-dataType
-    : complex=ARRAY '<' dataType '>'                            #complexDataType
-    | complex=MAP '<' dataType ',' dataType '>'                 #complexDataType
-    | complex=STRUCT ('<' complexColTypeList? '>' | NEQ)        #complexDataType
-    | identifier ('(' INTEGER_VALUE (',' INTEGER_VALUE)* ')')?  #primitiveDataType
-    ;
-
-colTypeList
-    : colType (',' colType)*
-    ;
-
-colType
-    : identifier dataType (COMMENT STRING)?
-    ;
-
-complexColTypeList
-    : complexColType (',' complexColType)*
-    ;
-
-complexColType
-    : identifier ':' dataType (COMMENT STRING)?
     ;
 
 whenClause
