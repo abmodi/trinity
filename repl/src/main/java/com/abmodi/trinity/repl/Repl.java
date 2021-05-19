@@ -21,7 +21,7 @@ public class Repl {
             if (command.equalsIgnoreCase("exit")) {
                 System.exit(0);
             }
-            parser.parsePlan(command);
+            System.out.println(parser.parsePlan(command));
             System.out.println(command);
         }
     }

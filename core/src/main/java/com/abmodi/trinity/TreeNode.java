@@ -17,4 +17,24 @@ public abstract class TreeNode<T> {
     public void addChild(TreeNode<T> node) {
         children.add(node);
     }
+
+    public abstract String simpleString();
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        generateTreeString(0, builder);
+        return builder.toString();
+    }
+
+    private void generateTreeString(int depth, StringBuilder builder) {
+        for (int i = 0; i < depth; ++i) {
+            builder.append("\t");
+        }
+        builder.append(simpleString());
+        for(TreeNode child : children) {
+            builder.append("\n");
+            child.generateTreeString(depth+1, builder);
+        }
+    }
 }

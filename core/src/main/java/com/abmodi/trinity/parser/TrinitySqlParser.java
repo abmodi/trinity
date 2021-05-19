@@ -1,8 +1,6 @@
 package com.abmodi.trinity.parser;
 
-import com.abmodi.trinity.expression.Attribute;
-import com.abmodi.trinity.expression.Expression;
-import com.abmodi.trinity.expression.Literal;
+import com.abmodi.trinity.expression.*;
 import com.abmodi.trinity.plans.logical.LogicalPlan;
 import com.abmodi.trinity.plans.logical.OneRowRelation;
 import com.abmodi.trinity.plans.logical.Project;
@@ -35,13 +33,30 @@ public class TrinitySqlParser extends SqlBaseVisitor<Object> {
     }
 
     @Override
-    public Expression visitIntegerLiteral(SqlParser.IntegerLiteralContext ctx) {
-        return new Literal(Integer.parseInt(ctx.getText()));
+    public Expression visitArithmeticBinary(SqlParser.ArithmeticBinaryContext ctx) {
+        Expression left = (Expression) visit(ctx.left);
+        Expression right = (Expression) visit(ctx.right);
+        int type = ctx.operator.getType();
+
+        if (type == SqlParser.ASTERISK) {
+            return new Multiply(left, right);
+        }
+        else if (type == SqlParser.ADD) {
+            return new Add(left, right);
+        }
+
+        return null;
     }
 
     @Override
     public LogicalPlan visitSingleStatement(SqlParser.SingleStatementContext ctx) {
-        return (LogicalPlan)visit(ctx.statement());
+        Object res = visit(ctx.statement());
+        return (LogicalPlan)(res);
+    }
+
+    @Override
+    public LogicalPlan visitQueryNoWith(SqlParser.QueryNoWithContext ctx) {
+        return (LogicalPlan)(visit(ctx.queryTerm()));
     }
 
     @Override

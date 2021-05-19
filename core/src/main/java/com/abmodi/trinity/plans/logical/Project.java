@@ -11,4 +11,9 @@ public class Project extends UnaryNode {
         super(child);
         this.projectList = projectList;
     }
+
+    @Override
+    public String simpleString() {
+        return "Project";
+    }
 }

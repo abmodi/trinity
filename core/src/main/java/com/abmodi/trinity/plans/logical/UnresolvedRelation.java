@@ -7,4 +7,9 @@ public class UnresolvedRelation extends LeafNode {
     UnresolvedRelation(String tableName) {
         this.tableName = tableName;
     }
+
+    @Override
+    public String simpleString() {
+        return "UnresolvedRelation";
+    }
 }

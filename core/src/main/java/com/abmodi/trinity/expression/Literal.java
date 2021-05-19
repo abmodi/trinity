@@ -9,7 +9,8 @@ public class Literal extends Expression {
         value = val;
     }
 
-    public int getValue() {
+    @Override
+    public int eval() {
         return value;
     }
 }
